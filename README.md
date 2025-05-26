@@ -1,3 +1,7 @@
+Aqui está o texto revisado e com a nova seção **"👥 Integrantes"** adicionada no final. Também removi a duplicação da seção "📋 Exemplo de Saída Serial".
+
+---
+
 # 🛵 iBike – Monitoramento Inteligente de Motos em Pátio com ESP32 e MQTT
 
 O **iBike** é um sistema de monitoramento que recebe automaticamente dados de identificação de motos via IoT (simulados neste projeto) e verifica o **status da moto no pátio**. O sistema utiliza um **ESP32**, um **sensor de presença**, comunicação **MQTT**, e dois LEDs para indicar se a moto está com permissão para circular ou se há alguma inconsistência.
@@ -110,3 +114,10 @@ Endereço IP: 192.168.0.105
 Movimento detectado - Moto: JLM3F45
 [ALERTA] Inconsistencia detectada! Moto com status 'PATIO': JLM3F45
 ```
+
+---
+
+## 👥 Integrantes
+
+* Gabriel Dias Menezes - RM: 555019
+* Júlia Soares Farias dos Santos – RM: 554609
