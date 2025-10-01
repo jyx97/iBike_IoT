@@ -4,7 +4,7 @@
         "type": "tab",
         "label": "Monitor de Motos",
         "disabled": false,
-        "info": "Dashboard para monitoramento de motos via MQTT"
+        "info": "Dashboard para monitoramento de motos via MQTT com visualização otimizada de GPS"
     },
     {
         "id": "69da520419775523",
@@ -32,7 +32,7 @@
         "type": "function",
         "z": "545a81dc95e62c64",
         "name": "Parser Mensagens",
-        "func": "/* Recebe msg.payload = string enviada pelo ESP32\n   Exemplo: \"Alerta: POI3D21 status: PENDENTE | GPS: (-23.462900,-46.505798) | Temp: 3.0C, Umidade: 6.4%\"\n   ou: \"Autorizada: LKU7A65 | Temp: 25.0C, Umidade: 60%\"\n*/\n\nlet payload = msg.payload.trim();\nlet tipo = 'info';\nlet icone = 'fa-motorcycle';\nlet cor = '#05A300';\nlet gps = null;\nlet temp = null;\nlet hum = null;\nlet mainMessage = payload;\n\n// Separa as partes da mensagem\nlet parts = payload.split(' | ');\n\n// Determina tipo, cor e ícone\nif (parts[0].includes('Autorizada:')) {\n    tipo = 'autorizada';\n    cor = '#05A300';\n    icone = 'fa-check-circle';\n} else if (parts[0].includes('Alerta:')) {\n    tipo = 'alerta';\n    cor = '#FF8C00';\n    icone = 'fa-exclamation-triangle';\n} else if (parts[0].includes('ERRO:')) {\n    tipo = 'erro';\n    cor = '#FF3B30';\n    icone = 'fa-times-circle';\n}\n\n// Extrai GPS, temperatura e umidade\nfor (let p of parts) {\n    let m = p.match(/GPS: \\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)/);\n    if (m) {\n        gps = { lat: parseFloat(m[1]), lon: parseFloat(m[2]), name: parts[0] }; // Inclui nome da placa\n    }\n    let t = p.match(/Temp: (N\\/A|\\d+\\.\\d+)C/);\n    let u = p.match(/Umidade: (N\\/A|\\d+\\.\\d+)%/);\n    if (t) temp = t[1] === 'N/A' ? 'N/A' : parseFloat(t[1]);\n    if (u) hum = u[1] === 'N/A' ? 'N/A' : parseFloat(u[1]);\n}\n\nmsg.tipo = tipo;\nmsg.cor = cor;\nmsg.icone = icone;\nmsg.mainMessage = parts[0];\nmsg.gps = gps;\nmsg.temp = temp !== null ? temp : 'N/A';\nmsg.hum = hum !== null ? hum : 'N/A';\nmsg.payload = payload;\nreturn msg;",
+        "func": "/* Recebe msg.payload = string enviada pelo ESP32\n   Exemplo: \"Alerta: POI3D21 status: PENDENTE | GPS: (-23.462900,-46.505798) | Temp: 3.0C, Umidade: 6.4%\"\n   ou: \"Autorizada: LKU7A65 | Temp: 25.0C, Umidade: 60%\"\n   GPS é extraído para o nó worldmap, temp e umidade para gauges, e mensagem para histórico/status\n*/\n\nlet payload = msg.payload.trim();\nlet tipo = 'info';\nlet icone = 'fa-motorcycle';\nlet cor = '#05A300';\nlet gps = null;\nlet temp = null;\nlet hum = null;\nlet mainMessage = payload;\n\n// Separa as partes da mensagem\nlet parts = payload.split(' | ');\n\n// Determina tipo, cor e ícone\nif (parts[0].includes('Autorizada:')) {\n    tipo = 'autorizada';\n    cor = '#05A300';\n    icone = 'fa-check-circle';\n} else if (parts[0].includes('Alerta:')) {\n    tipo = 'alerta';\n    cor = '#FF8C00';\n    icone = 'fa-exclamation-triangle';\n} else if (parts[0].includes('ERRO:')) {\n    tipo = 'erro';\n    cor = '#FF3B30';\n    icone = 'fa-times-circle';\n}\n\n// Extrai GPS, temperatura e umidade\nfor (let p of parts) {\n    let m = p.match(/GPS: \\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)/);\n    if (m) {\n        gps = { lat: parseFloat(m[1]), lon: parseFloat(m[2]), name: parts[0], icon: 'fa-motorcycle' }; // Inclui nome da placa e ícone para o mapa\n    }\n    let t = p.match(/Temp: (N\\/A|\\d+\\.\\d+)C/);\n    let u = p.match(/Umidade: (N\\/A|\\d+\\.\\d+)%/);\n    if (t) temp = t[1] === 'N/A' ? 'N/A' : parseFloat(t[1]);\n    if (u) hum = u[1] === 'N/A' ? 'N/A' : parseFloat(u[1]);\n}\n\nmsg.tipo = tipo;\nmsg.cor = cor;\nmsg.icone = icone;\nmsg.mainMessage = parts[0];\nmsg.gps = gps;\nmsg.temp = temp !== null ? temp : 'N/A';\nmsg.hum = hum !== null ? hum : 'N/A';\nmsg.payload = payload;\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -45,9 +45,9 @@
                 "6d7f379715e8e436",
                 "2517c01b85406444",
                 "593057b327ea8d1e",
-                "01f07536b4126fcb",
                 "427b44f95b83da4c",
-                "7f8b53485f86362b"
+                "7f8b53485f86362b",
+                "b9ddb4b6ecb0bbe3"
             ]
         ]
     },
@@ -130,7 +130,7 @@
         ]
     },
     {
-        "id": "01f07536b4126fcb",
+        "id": "b9ddb4b6ecb0bbe3",
         "type": "worldmap",
         "z": "545a81dc95e62c64",
         "name": "Mapa GPS",
@@ -147,10 +147,16 @@
         "zoomlock": "false",
         "hiderightclick": "false",
         "coords": "deg",
-        "showgrid": "false",
-        "showruler": "false",
+        "showgrid": "true",
+        "showruler": "true",
         "allowFileDrop": "false",
         "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriO,EsriDG,NatGeo,UKOS,OpTop",
+        "group": "dfd7b6f8.b093d8",
+        "order": 3,
+        "width": "12",
+        "height": "14",
         "x": 490,
         "y": 260,
         "wires": []
@@ -218,7 +224,7 @@
         "order": 0,
         "width": 0,
         "height": 0,
-        "format": "<style>\n  /* Aumenta o tamanho base do grid */\n  .nr-dashboard-theme .nr-dashboard-template {\n    padding: 12px !important;\n  }\n  .nr-dashboard-cardcontainer {\n    margin: 12px !important;\n  }\n  /* Ajusta fontes e espaçamento */\n  body.nr-dashboard-theme {\n    font-size: 16px !important;\n  }\n  .nr-dashboard-cardtitle {\n    font-size: 1.3em !important;\n  }\n  /* Garante que o mapa preencha o espaço */\n  #worldmap-container {\n    width: 100% !important;\n    height: 100% !important;\n    min-height: 600px !important;\n  }\n</style>",
+        "format": "<style>\n  /* Aumenta o tamanho base do grid */\n  .nr-dashboard-theme .nr-dashboard-template {\n    padding: 16px !important;\n  }\n  .nr-dashboard-cardcontainer {\n    margin: 16px !important;\n  }\n  /* Ajusta fontes e espaçamento */\n  body.nr-dashboard-theme {\n    font-size: 18px !important;\n  }\n  .nr-dashboard-cardtitle {\n    font-size: 1.5em !important;\n  }\n  /* Otimiza o mapa GPS */\n  #worldmap-container {\n    width: 100% !important;\n    height: 100% !important;\n    min-height: 700px !important;\n    max-width: 1200px !important;\n    margin: 0 auto !important;\n    border-radius: 12px !important;\n    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;\n  }\n</style>",
         "storeOutMessages": true,
         "fwdInMessages": true,
         "resendOnRefresh": true,
@@ -255,8 +261,8 @@
         "tab": "c5756e5d.8105d",
         "order": 1,
         "disp": true,
-        "width": "6",
-        "collapse": true
+        "width": "12",
+        "collapse": false
     },
     {
         "id": "c5756e5d.8105d",
