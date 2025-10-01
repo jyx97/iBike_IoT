@@ -1,37 +1,234 @@
 [
     {
-        "id": "tab1",
+        "id": "545a81dc95e62c64",
         "type": "tab",
         "label": "Monitor de Motos",
         "disabled": false,
-        "info": ""
+        "info": "Dashboard para monitoramento de motos via MQTT"
     },
     {
-        "id": "9b0a38b0b4384909",
-        "type": "telegram bot",
-        "botname": "Helpiee_Bot",
-        "usernames": "",
-        "chatids": "",
-        "baseapiurl": "",
-        "testenvironment": false,
-        "updatemode": "polling",
-        "addressfamily": "",
-        "pollinterval": "300",
-        "usesocks": false,
-        "sockshost": "",
-        "socksprotocol": "socks5",
-        "socksport": "6667",
-        "socksusername": "anonymous",
-        "sockspassword": "",
-        "bothost": "",
-        "botpath": "",
-        "localbotport": "8443",
-        "publicbotport": "8443",
-        "privatekey": "",
-        "certificate": "",
-        "useselfsignedcertificate": false,
-        "sslterminated": false,
-        "verboselogging": false
+        "id": "69da520419775523",
+        "type": "mqtt in",
+        "z": "545a81dc95e62c64",
+        "name": "MQTT Input",
+        "topic": "sistema/motos",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "b6b9a3cd.1c20b8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 70,
+        "y": 100,
+        "wires": [
+            [
+                "1c26c19063b58176",
+                "2940426e7bfb0a1a"
+            ]
+        ]
+    },
+    {
+        "id": "1c26c19063b58176",
+        "type": "function",
+        "z": "545a81dc95e62c64",
+        "name": "Parser Mensagens",
+        "func": "/* Recebe msg.payload = string enviada pelo ESP32\n   Exemplo: \"Alerta: POI3D21 status: PENDENTE | GPS: (-23.462900,-46.505798) | Temp: 3.0C, Umidade: 6.4%\"\n   ou: \"Autorizada: LKU7A65 | Temp: 25.0C, Umidade: 60%\"\n*/\n\nlet payload = msg.payload.trim();\nlet tipo = 'info';\nlet icone = 'fa-motorcycle';\nlet cor = '#05A300';\nlet gps = null;\nlet temp = null;\nlet hum = null;\nlet mainMessage = payload;\n\n// Separa as partes da mensagem\nlet parts = payload.split(' | ');\n\n// Determina tipo, cor e ícone\nif (parts[0].includes('Autorizada:')) {\n    tipo = 'autorizada';\n    cor = '#05A300';\n    icone = 'fa-check-circle';\n} else if (parts[0].includes('Alerta:')) {\n    tipo = 'alerta';\n    cor = '#FF8C00';\n    icone = 'fa-exclamation-triangle';\n} else if (parts[0].includes('ERRO:')) {\n    tipo = 'erro';\n    cor = '#FF3B30';\n    icone = 'fa-times-circle';\n}\n\n// Extrai GPS, temperatura e umidade\nfor (let p of parts) {\n    let m = p.match(/GPS: \\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)/);\n    if (m) {\n        gps = { lat: parseFloat(m[1]), lon: parseFloat(m[2]), name: parts[0] }; // Inclui nome da placa\n    }\n    let t = p.match(/Temp: (N\\/A|\\d+\\.\\d+)C/);\n    let u = p.match(/Umidade: (N\\/A|\\d+\\.\\d+)%/);\n    if (t) temp = t[1] === 'N/A' ? 'N/A' : parseFloat(t[1]);\n    if (u) hum = u[1] === 'N/A' ? 'N/A' : parseFloat(u[1]);\n}\n\nmsg.tipo = tipo;\nmsg.cor = cor;\nmsg.icone = icone;\nmsg.mainMessage = parts[0];\nmsg.gps = gps;\nmsg.temp = temp !== null ? temp : 'N/A';\nmsg.hum = hum !== null ? hum : 'N/A';\nmsg.payload = payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 100,
+        "wires": [
+            [
+                "6d7f379715e8e436",
+                "2517c01b85406444",
+                "593057b327ea8d1e",
+                "01f07536b4126fcb",
+                "427b44f95b83da4c",
+                "7f8b53485f86362b"
+            ]
+        ]
+    },
+    {
+        "id": "2940426e7bfb0a1a",
+        "type": "debug",
+        "z": "545a81dc95e62c64",
+        "name": "Debug MQTT",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 210,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "6d7f379715e8e436",
+        "type": "ui_template",
+        "z": "545a81dc95e62c64",
+        "group": "dfd7b6f8.b093d8",
+        "name": "Histórico",
+        "order": 1,
+        "width": "12",
+        "height": "12",
+        "format": "<div style=\"max-height:900px;overflow-y:auto;padding:40px;border-radius:16px;background:#f8f8f8;box-shadow:0 6px 16px rgba(0,0,0,0.15);font-family:Arial,Helvetica,sans-serif;max-width:1200px;margin:30px auto;\">\n  <h3 style=\"margin:0 0 25px;color:#8a2be2;display:flex;align-items:center;gap:12px;font-size:2em;font-weight:600;\"><i class=\"fa fa-history\" style=\"font-size:1.3em;\"></i> Histórico de Eventos</h3>\n  <button onclick=\"(function(){$('#hist-body').empty();})()\" style=\"margin-bottom:25px;background:linear-gradient(90deg,#8a2be2,#9932cc);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:1.2em;\">Limpar Histórico</button>\n  <table style=\"width:100%;border-collapse:separate;border-spacing:0 12px;font-size:1.2em;\">\n    <thead><tr style=\"background:linear-gradient(90deg,#8a2be2,#9932cc);color:#fff;\"><th style=\"padding:15px;text-align:left;font-weight:500;\">Tipo</th><th style=\"padding:15px;text-align:left;font-weight:500;\">Mensagem</th><th style=\"padding:15px;text-align:right;font-weight:500;\">Hora</th></tr></thead>\n    <tbody id=\"hist-body\"></tbody>\n  </table>\n</div>\n<script>\n(function(scope){\n  scope.$watch('msg', function(msg){\n    if (!msg) return;\n    const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});\n    let bg = '#fff';\n    if (msg.tipo==='autorizada') bg='rgba(5,163,0,0.1)';\n    else if (msg.tipo==='alerta' || msg.tipo==='erro') bg='rgba(138,43,226,0.1)';\n    $('#hist-body').prepend(\n      `<tr style=\"background:${bg};transition:all 0.3s ease;\"><td style=\"padding:15px;border-left:5px solid ${msg.cor};border-radius:5px 0 0 5px;\"><i class=\"fa ${msg.icone}\" style=\"font-size:1.2em;\"></i> ${msg.tipo.toUpperCase()}</td><td style=\"padding:15px;\">${msg.payload}</td><td style=\"padding:15px;text-align:right;font-family:monospace;color:#555;\">${now}</td></tr>`\n    );\n    if ($('#hist-body tr').length>50) $('#hist-body tr:last').remove();\n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 470,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2517c01b85406444",
+        "type": "ui_toast",
+        "z": "545a81dc95e62c64",
+        "position": "top right",
+        "displayTime": "5000",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "",
+        "cancel": "",
+        "raw": true,
+        "className": "",
+        "topic": "",
+        "name": "Notificações",
+        "x": 510,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "593057b327ea8d1e",
+        "type": "ui_template",
+        "z": "545a81dc95e62c64",
+        "group": "dfd7b6f8.b093d8",
+        "name": "Status Atual",
+        "order": 2,
+        "width": "12",
+        "height": "10",
+        "format": "<div style=\"background:{{msg.cor}};padding:40px;border-radius:16px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,0.15);text-align:center;font-family:Arial,Helvetica,sans-serif;max-width:1200px;margin:30px auto;\">\n  <h2 style=\"margin:0 0 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:2em;font-weight:600;\"><i class=\"fa {{msg.icone}}\" style=\"font-size:1.3em;\"></i> {{msg.tipo.charAt(0).toUpperCase()+msg.tipo.slice(1)}}</h2>\n  <p style=\"margin:12px 0;font-size:1.4em;font-weight:500;\">{{msg.mainMessage}}</p>\n  <p ng-if=\"msg.gps\" style=\"margin:12px 0;font-size:1.3em;\">GPS: ({{msg.gps.lat.toFixed(6)}}, {{msg.gps.lon.toFixed(6)}})</p>\n  <p ng-if=\"msg.temp !== 'N/A'\" style=\"margin:12px 0;font-size:1.3em;\">Temperatura: {{msg.temp}} °C</p>\n  <p ng-if=\"msg.hum !== 'N/A'\" style=\"margin:12px 0;font-size:1.3em;\">Umidade: {{msg.hum}} %</p>\n  <p ng-if=\"msg.temp === 'N/A' && msg.hum === 'N/A'\" style=\"margin:12px 0;font-size:1.3em;opacity:0.8;\">Dados de ambiente indisponíveis</p>\n  <p style=\"margin-top:25px;font-size:1.1em;opacity:0.8;\">Última atualização: {{now | date:'HH:mm:ss'}}</p>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 470,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "01f07536b4126fcb",
+        "type": "worldmap",
+        "z": "545a81dc95e62c64",
+        "name": "Mapa GPS",
+        "lat": "-23.5",
+        "lon": "-46.6",
+        "zoom": "15",
+        "layer": "OSM",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "true",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "deg",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "x": 490,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "427b44f95b83da4c",
+        "type": "ui_gauge",
+        "z": "545a81dc95e62c64",
+        "name": "Temperatura",
+        "group": "dfd7b6f8.b093d8",
+        "order": 4,
+        "width": "6",
+        "height": "6",
+        "gtype": "gauge",
+        "title": "Temperatura (°C)",
+        "label": "°C",
+        "format": "{{msg.temp !== 'N/A' ? (msg.temp | number:1) : 'N/A'}}",
+        "min": "0",
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "25",
+        "seg2": "35",
+        "className": "",
+        "x": 470,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "7f8b53485f86362b",
+        "type": "ui_gauge",
+        "z": "545a81dc95e62c64",
+        "name": "Umidade",
+        "group": "dfd7b6f8.b093d8",
+        "order": 5,
+        "width": "6",
+        "height": "6",
+        "gtype": "gauge",
+        "title": "Umidade (%)",
+        "label": "%",
+        "format": "{{msg.hum !== 'N/A' ? (msg.hum | number:1) : 'N/A'}}",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "className": "",
+        "x": 470,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "7e218557a5e43c0b",
+        "type": "ui_template",
+        "z": "545a81dc95e62c64",
+        "group": "",
+        "name": "Ajuste de Tema",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n  /* Aumenta o tamanho base do grid */\n  .nr-dashboard-theme .nr-dashboard-template {\n    padding: 12px !important;\n  }\n  .nr-dashboard-cardcontainer {\n    margin: 12px !important;\n  }\n  /* Ajusta fontes e espaçamento */\n  body.nr-dashboard-theme {\n    font-size: 16px !important;\n  }\n  .nr-dashboard-cardtitle {\n    font-size: 1.3em !important;\n  }\n  /* Garante que o mapa preencha o espaço */\n  #worldmap-container {\n    width: 100% !important;\n    height: 100% !important;\n    min-height: 600px !important;\n  }\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "className": "",
+        "x": 300,
+        "y": 300,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "b6b9a3cd.1c20b8",
@@ -52,110 +249,6 @@
         "closePayload": ""
     },
     {
-        "id": "e06f42786f0521e3",
-        "type": "ui_base",
-        "theme": {
-            "name": "theme-light",
-            "lightTheme": {
-                "default": "#0094CE",
-                "baseColor": "#0094CE",
-                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
-                "edited": true,
-                "reset": false
-            },
-            "darkTheme": {
-                "default": "#097479",
-                "baseColor": "#097479",
-                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
-                "edited": false
-            },
-            "customTheme": {
-                "name": "Untitled Theme 1",
-                "default": "#4B7930",
-                "baseColor": "#4B7930",
-                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
-            },
-            "themeState": {
-                "base-color": {
-                    "default": "#0094CE",
-                    "value": "#0094CE",
-                    "edited": false
-                },
-                "page-titlebar-backgroundColor": {
-                    "value": "#0094CE",
-                    "edited": false
-                },
-                "page-backgroundColor": {
-                    "value": "#fafafa",
-                    "edited": false
-                },
-                "page-sidebar-backgroundColor": {
-                    "value": "#ffffff",
-                    "edited": false
-                },
-                "group-textColor": {
-                    "value": "#1bbfff",
-                    "edited": false
-                },
-                "group-borderColor": {
-                    "value": "#ffffff",
-                    "edited": false
-                },
-                "group-backgroundColor": {
-                    "value": "#ffffff",
-                    "edited": false
-                },
-                "widget-textColor": {
-                    "value": "#111111",
-                    "edited": false
-                },
-                "widget-backgroundColor": {
-                    "value": "#0094ce",
-                    "edited": false
-                },
-                "widget-borderColor": {
-                    "value": "#ffffff",
-                    "edited": false
-                },
-                "base-font": {
-                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
-                }
-            },
-            "angularTheme": {
-                "primary": "indigo",
-                "accents": "blue",
-                "warn": "red",
-                "background": "grey",
-                "palette": "light"
-            }
-        },
-        "site": {
-            "name": "Node-RED Dashboard",
-            "hideToolbar": "false",
-            "allowSwipe": "false",
-            "lockMenu": "false",
-            "allowTempTheme": "true",
-            "dateFormat": "DD/MM/YYYY",
-            "sizes": {
-                "sx": 48,
-                "sy": 48,
-                "gx": 6,
-                "gy": 6,
-                "cx": 6,
-                "cy": 6,
-                "px": 0,
-                "py": 0
-            }
-        }
-    },
-    {
-        "id": "c5756e5d.8105d",
-        "type": "ui_tab",
-        "name": "Dashboard",
-        "icon": "dashboard",
-        "order": 1
-    },
-    {
         "id": "dfd7b6f8.b093d8",
         "type": "ui_group",
         "name": "Alertas do Sistema",
@@ -166,194 +259,10 @@
         "collapse": true
     },
     {
-        "id": "6fd1e79248d680b4",
-        "type": "mqtt-broker",
-        "name": "Broker Local",
-        "broker": "192.168.4.1",
-        "port": "1883",
-        "clientid": "",
-        "autoConnect": true,
-        "usetls": false,
-        "protocolVersion": "4",
-        "keepalive": "60",
-        "cleansession": true,
-        "birthTopic": "",
-        "birthQos": "0",
-        "birthPayload": "",
-        "closeTopic": "",
-        "closeQos": "0",
-        "closePayload": "",
-        "willTopic": "",
-        "willQos": "0",
-        "willPayload": ""
-    },
-    {
-        "id": "6a1dbf14b87fa4fc",
-        "type": "ui_group",
-        "name": "Monitoramento",
-        "tab": "5a18e5cd67e2912a",
-        "order": 1,
-        "disp": true,
-        "width": 6,
-        "collapse": false,
-        "className": ""
-    },
-    {
-        "id": "5a18e5cd67e2912a",
+        "id": "c5756e5d.8105d",
         "type": "ui_tab",
-        "name": "Sistema de Motos",
+        "name": "Dashboard",
         "icon": "dashboard",
-        "order": 1,
-        "disabled": false,
-        "hidden": false
-    },
-    {
-        "id": "broker",
-        "type": "mqtt-broker",
-        "name": "Wokwi MQTT",
-        "broker": "mqtt.wokwi.com",
-        "port": "1883",
-        "clientid": "",
-        "autoConnect": true,
-        "usetls": false,
-        "protocolVersion": "4",
-        "keepalive": "60",
-        "cleansession": true,
-        "autoUnsubscribe": true,
-        "birthTopic": "sistema/motos",
-        "birthQos": "0",
-        "birthPayload": "",
-        "birthMsg": {},
-        "closeTopic": "",
-        "closeQos": "0",
-        "closePayload": "",
-        "closeMsg": {},
-        "willTopic": "",
-        "willQos": "0",
-        "willPayload": "",
-        "willMsg": {},
-        "userProps": "",
-        "sessionExpiry": ""
-    },
-    {
-        "id": "mqtt-in",
-        "type": "mqtt in",
-        "z": "tab1",
-        "name": "",
-        "topic": "sistema/motos",
-        "qos": "0",
-        "datatype": "auto",
-        "broker": "b6b9a3cd.1c20b8",
-        "nl": false,
-        "rap": false,
-        "inputs": 0,
-        "x": 70,
-        "y": 100,
-        "wires": [
-            [
-                "msg-parser",
-                "7f57a48603b44990"
-            ]
-        ]
-    },
-    {
-        "id": "msg-parser",
-        "type": "function",
-        "z": "tab1",
-        "name": "Parser Mensagens",
-        "func": "let tipo = 'info';\nlet icone = 'fa-motorcycle';\nlet cor = 'green';\n\nif (msg.payload.includes('[ALERTA GRAVE]')) {\n  tipo = 'alerta';\n  cor = 'red';\n  icone = 'fa-exclamation-triangle';\n} else if (msg.payload.includes('[ALERTA]')) {\n  tipo = 'aviso';\n  cor = 'orange';\n  icone = 'fa-exclamation-circle';\n}\n\nmsg.tipo = tipo;\nmsg.cor = cor;\nmsg.icone = icone;\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 270,
-        "y": 100,
-        "wires": [
-            [
-                "historico",
-                "notificacoes",
-                "dashboard-ui"
-            ]
-        ]
-    },
-    {
-        "id": "7f57a48603b44990",
-        "type": "debug",
-        "z": "tab1",
-        "name": "Debug MQTT",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 210,
-        "y": 220,
-        "wires": []
-    },
-    {
-        "id": "historico",
-        "type": "ui_template",
-        "z": "tab1",
-        "group": "dfd7b6f8.b093d8",
-        "name": "Histórico",
-        "order": 1,
-        "width": "6",
-        "height": "5",
-        "format": "<!-- Histórico de Eventos Premium -->\n<div style=\"\n    max-height: 400px;\n    overflow-y: auto;\n    padding: 25px;\n    border-radius: 12px;\n    background: linear-gradient(145deg, #f5f5f5, #ffffff);\n    box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;\n\">\n  <h3 style=\"\n      color: #8a2be2;\n      margin-bottom: 25px;\n      font-weight: 600;\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      font-size: 1.3em;\n  \">\n    <i class=\"fa fa-history\" style=\"font-size: 1.2em;\"></i> \n    Histórico de Eventos\n  </h3>\n  \n  <table style=\"\n      width: 100%;\n      border-spacing: 0 8px;\n      border-collapse: separate;\n  \">\n    <thead>\n      <tr style=\"\n          background: linear-gradient(90deg, #8a2be2, #9932cc);\n          color: white;\n          position: sticky;\n          top: 0;\n          z-index: 10;\n      \">\n        <th style=\"\n            padding: 14px;\n            text-align: left;\n            font-weight: 500;\n            letter-spacing: 0.5px;\n        \">Tipo</th>\n        <th style=\"\n            padding: 14px;\n            text-align: left;\n            font-weight: 500;\n            letter-spacing: 0.5px;\n        \">Mensagem</th>\n        <th style=\"\n            padding: 14px;\n            text-align: right;\n            font-weight: 500;\n            letter-spacing: 0.5px;\n        \">Hora</th>\n      </tr>\n    </thead>\n    <tbody id=\"historico-body\" style=\"font-size: 0.95em;\"></tbody>\n  </table>\n</div>\n\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n      if (msg) {\n        const now = new Date();\n        const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});\n\n        let bgColor = '#ffffff';\n        let textColor = '#333333';\n        let borderLeft = '4px solid transparent';\n\n        if (msg.tipo === 'alerta') {\n          bgColor = 'rgba(138, 43, 226, 0.08)';\n          textColor = '#8a2be2';\n          borderLeft = '4px solid #8a2be2';\n        } else if (msg.tipo === 'aviso') {\n          bgColor = 'rgba(255, 193, 7, 0.1)';\n          textColor = '#ff8c00';\n          borderLeft = '4px solid #ff8c00';\n        } else if (msg.tipo === 'autorizada') {\n          bgColor = 'rgba(0, 128, 0, 0.08)';\n          textColor = '#05A300';\n          borderLeft = '4px solid #05A300';\n        }\n\n        $('#historico-body').prepend(`\n          <tr style=\"\n              background-color: ${bgColor};\n              color: ${textColor};\n              transition: all 0.3s ease;\n          \">\n            <td style=\"\n                padding: 12px;\n                border-left: ${borderLeft};\n                border-radius: 4px 0 0 4px;\n                font-weight: 500;\n                display: flex;\n                align-items: center;\n                gap: 8px;\n            \">\n              <i class=\"fa ${msg.icone}\" style=\"font-size: 1.1em;\"></i> \n              ${msg.tipo.toUpperCase()}\n            </td>\n            <td style=\"padding: 12px;\">${msg.payload}</td>\n            <td style=\"\n                padding: 12px;\n                text-align: right;\n                border-radius: 0 4px 4px 0;\n                font-family: 'Courier New', monospace;\n                font-weight: 500;\n                color: #666;\n            \">${timeString}</td>\n          </tr>\n        `);\n\n        // Limitar a 50 itens no histórico\n        if($('#historico-body tr').length > 50) {\n          $('#historico-body tr:last').remove();\n        }\n      }\n    });\n  })(scope);\n</script>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": false,
-        "templateScope": "local",
-        "className": "",
-        "x": 470,
-        "y": 40,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "notificacoes",
-        "type": "ui_toast",
-        "z": "tab1",
-        "position": "top right",
-        "displayTime": "5000",
-        "highlight": "",
-        "sendall": true,
-        "outputs": 0,
-        "ok": "",
-        "cancel": "",
-        "raw": true,
-        "className": "",
-        "topic": "topic",
-        "name": "",
-        "x": 510,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "dashboard-ui",
-        "type": "ui_template",
-        "z": "tab1",
-        "group": "dfd7b6f8.b093d8",
-        "name": "Status Atual",
-        "order": 1,
-        "width": "6",
-        "height": "6",
-        "format": "<div ng-style=\"{\n      'background-color': msg.tipo === 'alerta' ? '#FF3B30' : (msg.cor || '#05A300'),\n      'padding': '25px 30px',\n      'border-radius': '12px',\n      'color': 'white',\n      'box-shadow': '0 4px 10px rgba(0, 0, 0, 0.15)',\n      'font-family': 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',\n      'max-width': '400px',\n      'margin': 'auto',\n      'text-align': 'center',\n      'border': 'none',\n      'outline': 'none',\n      'transition': 'background-color 0.3s ease'\n    }\">\n  <h2 style=\"\n      margin-bottom: 15px; \n      font-weight: 700; \n      letter-spacing: 1px;\n      text-shadow: 0 2px 4px rgba(0,0,0,0.1);\n    \">\n    <i class=\"fa {{msg.icone}}\" style=\"margin-right: 10px;\"></i> \n    {{msg.tipo === 'alerta' ? 'Alerta' : 'Status'}}\n  </h2>\n  <p style=\"\n      font-size: 1.2em; \n      margin-bottom: 15px; \n      font-weight: 600;\n      line-height: 1.4;\n    \">\n    {{msg.payload}}\n  </p>\n  <p style=\"\n      font-size: 0.9em; \n      opacity: 0.8;\n      font-style: italic;\n      margin-top: 20px;\n    \">\n    Última atualização: {{now | date:'HH:mm:ss'}}\n  </p>\n</div>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": false,
-        "templateScope": "local",
-        "className": "",
-        "x": 470,
-        "y": 200,
-        "wires": [
-            []
-        ]
+        "order": 1
     }
 ]

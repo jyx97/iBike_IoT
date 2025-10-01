@@ -3,3 +3,6 @@
 
 PubSubClient
 WiFi
+DHT sensor library
+DHT11_Sensor
+DHT11
