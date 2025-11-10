@@ -1,15 +1,8 @@
 [
     {
-        "id": "545a81dc95e62c64",
-        "type": "tab",
-        "label": "Monitor de Motos",
-        "disabled": false,
-        "info": "Dashboard para monitoramento de motos via MQTT com visualização otimizada de GPS"
-    },
-    {
-        "id": "69da520419775523",
+        "id": "1cf2fbdd9443ccd9",
         "type": "mqtt in",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "MQTT Input",
         "topic": "sistema/motos",
         "qos": "0",
@@ -18,43 +11,45 @@
         "nl": false,
         "rap": false,
         "inputs": 0,
-        "x": 70,
-        "y": 100,
+        "x": 80,
+        "y": 260,
         "wires": [
             [
-                "1c26c19063b58176",
-                "2940426e7bfb0a1a"
+                "5cc3aae4ffd3a723",
+                "a5544605bb9a7cb1"
             ]
         ]
     },
     {
-        "id": "1c26c19063b58176",
+        "id": "5cc3aae4ffd3a723",
         "type": "function",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "Parser Mensagens",
         "func": "/* Recebe msg.payload = string enviada pelo ESP32\n   Exemplo: \"Alerta: POI3D21 status: PENDENTE | GPS: (-23.462900,-46.505798) | Temp: 3.0C, Umidade: 6.4%\"\n   ou: \"Autorizada: LKU7A65 | Temp: 25.0C, Umidade: 60%\"\n   GPS é extraído para o nó worldmap, temp e umidade para gauges, e mensagem para histórico/status\n*/\n\nlet payload = msg.payload.trim();\nlet tipo = 'info';\nlet icone = 'fa-motorcycle';\nlet cor = '#05A300';\nlet gps = null;\nlet temp = null;\nlet hum = null;\nlet mainMessage = payload;\n\n// Separa as partes da mensagem\nlet parts = payload.split(' | ');\n\n// Determina tipo, cor e ícone\nif (parts[0].includes('Autorizada:')) {\n    tipo = 'autorizada';\n    cor = '#05A300';\n    icone = 'fa-check-circle';\n} else if (parts[0].includes('Alerta:')) {\n    tipo = 'alerta';\n    cor = '#FF8C00';\n    icone = 'fa-exclamation-triangle';\n} else if (parts[0].includes('ERRO:')) {\n    tipo = 'erro';\n    cor = '#FF3B30';\n    icone = 'fa-times-circle';\n}\n\n// Extrai GPS, temperatura e umidade\nfor (let p of parts) {\n    let m = p.match(/GPS: \\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)/);\n    if (m) {\n        gps = { lat: parseFloat(m[1]), lon: parseFloat(m[2]), name: parts[0], icon: 'fa-motorcycle' }; // Inclui nome da placa e ícone para o mapa\n    }\n    let t = p.match(/Temp: (N\\/A|\\d+\\.\\d+)C/);\n    let u = p.match(/Umidade: (N\\/A|\\d+\\.\\d+)%/);\n    if (t) temp = t[1] === 'N/A' ? 'N/A' : parseFloat(t[1]);\n    if (u) hum = u[1] === 'N/A' ? 'N/A' : parseFloat(u[1]);\n}\n\nmsg.tipo = tipo;\nmsg.cor = cor;\nmsg.icone = icone;\nmsg.mainMessage = parts[0];\nmsg.gps = gps;\nmsg.temp = temp !== null ? temp : 'N/A';\nmsg.hum = hum !== null ? hum : 'N/A';\nmsg.payload = payload;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 260,
-        "y": 100,
+        "x": 270,
+        "y": 260,
         "wires": [
             [
-                "6d7f379715e8e436",
-                "2517c01b85406444",
-                "593057b327ea8d1e",
-                "427b44f95b83da4c",
-                "7f8b53485f86362b",
-                "b9ddb4b6ecb0bbe3"
+                "dccf68a3bc1f7c13",
+                "b72692af3997ec90",
+                "8d59bbc98caddde9",
+                "2c09e3b644c043ba",
+                "d9e87b4cd742edfe",
+                "e4d063e0baa2c6d6",
+                "27458888d0ed9551"
             ]
         ]
     },
     {
-        "id": "2940426e7bfb0a1a",
+        "id": "a5544605bb9a7cb1",
         "type": "debug",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "Debug MQTT",
         "active": true,
         "tosidebar": true,
@@ -64,14 +59,14 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 210,
-        "y": 220,
+        "x": 220,
+        "y": 380,
         "wires": []
     },
     {
-        "id": "6d7f379715e8e436",
+        "id": "dccf68a3bc1f7c13",
         "type": "ui_template",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "group": "dfd7b6f8.b093d8",
         "name": "Histórico",
         "order": 1,
@@ -83,16 +78,16 @@
         "resendOnRefresh": false,
         "templateScope": "local",
         "className": "",
-        "x": 470,
-        "y": 40,
+        "x": 700,
+        "y": 180,
         "wires": [
             []
         ]
     },
     {
-        "id": "2517c01b85406444",
+        "id": "b72692af3997ec90",
         "type": "ui_toast",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "position": "top right",
         "displayTime": "5000",
         "highlight": "",
@@ -104,14 +99,14 @@
         "className": "",
         "topic": "",
         "name": "Notificações",
-        "x": 510,
-        "y": 100,
+        "x": 690,
+        "y": 260,
         "wires": []
     },
     {
-        "id": "593057b327ea8d1e",
+        "id": "8d59bbc98caddde9",
         "type": "ui_template",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "group": "dfd7b6f8.b093d8",
         "name": "Status Atual",
         "order": 2,
@@ -123,16 +118,16 @@
         "resendOnRefresh": false,
         "templateScope": "local",
         "className": "",
-        "x": 470,
-        "y": 200,
+        "x": 650,
+        "y": 340,
         "wires": [
             []
         ]
     },
     {
-        "id": "b9ddb4b6ecb0bbe3",
+        "id": "e4d063e0baa2c6d6",
         "type": "worldmap",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "Mapa GPS",
         "lat": "-23.5",
         "lon": "-46.6",
@@ -153,18 +148,14 @@
         "path": "/worldmap",
         "overlist": "DR,CO,RA,DN,HM",
         "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriO,EsriDG,NatGeo,UKOS,OpTop",
-        "group": "dfd7b6f8.b093d8",
-        "order": 3,
-        "width": "12",
-        "height": "14",
-        "x": 490,
-        "y": 260,
+        "x": 690,
+        "y": 400,
         "wires": []
     },
     {
-        "id": "427b44f95b83da4c",
+        "id": "2c09e3b644c043ba",
         "type": "ui_gauge",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "Temperatura",
         "group": "dfd7b6f8.b093d8",
         "order": 4,
@@ -184,14 +175,14 @@
         "seg1": "25",
         "seg2": "35",
         "className": "",
-        "x": 470,
-        "y": 320,
+        "x": 570,
+        "y": 480,
         "wires": []
     },
     {
-        "id": "7f8b53485f86362b",
+        "id": "d9e87b4cd742edfe",
         "type": "ui_gauge",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "name": "Umidade",
         "group": "dfd7b6f8.b093d8",
         "order": 5,
@@ -211,14 +202,14 @@
         "seg1": "50",
         "seg2": "80",
         "className": "",
-        "x": 470,
-        "y": 380,
+        "x": 540,
+        "y": 560,
         "wires": []
     },
     {
-        "id": "7e218557a5e43c0b",
+        "id": "9cc2e6d01c848911",
         "type": "ui_template",
-        "z": "545a81dc95e62c64",
+        "z": "f29f00a105037432",
         "group": "",
         "name": "Ajuste de Tema",
         "order": 0,
@@ -230,8 +221,50 @@
         "resendOnRefresh": true,
         "templateScope": "global",
         "className": "",
-        "x": 300,
-        "y": 300,
+        "x": 240,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "27458888d0ed9551",
+        "type": "function",
+        "z": "f29f00a105037432",
+        "name": "function 1",
+        "func": "let doc = {\n    placa: msg.mainMessage.split(\": \")[1]?.split(\" \")[0] || \"DESCONHECIDA\",\n    status: msg.tipo,\n    hora: new Date().toISOString(),\n    gps: msg.gps ? { lat: msg.gps.lat, lon: msg.gps.lon } : null,\n    temperatura: msg.temp,\n    umidade: msg.hum\n};\n\nmsg.payload = {\n    fields: {\n        placa: { stringValue: doc.placa },\n        status: { stringValue: doc.status },\n        hora: { timestampValue: doc.hora },\n        gps: doc.gps ? {\n            geoPointValue: {\n                latitude: doc.gps.lat,\n                longitude: doc.gps.lon\n            }\n        } : { nullValue: null },\n        temperatura: doc.temperatura !== 'N/A' ? { doubleValue: doc.temperatura } : { nullValue: null },\n        umidade: doc.umidade !== 'N/A' ? { doubleValue: doc.umidade } : { nullValue: null }\n    }\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "f5f20ffd2a3b4f66"
+            ]
+        ]
+    },
+    {
+        "id": "f5f20ffd2a3b4f66",
+        "type": "http request",
+        "z": "f29f00a105037432",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://firestore.googleapis.com/v1/projects/ibike-ad385/databases/(default)/documents/eventos_motos?key=AIzaSyBPb2OMPTPAZHR96Hty83aA_-1I5RBSPMw",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 460,
+        "y": 140,
         "wires": [
             []
         ]
@@ -261,8 +294,8 @@
         "tab": "c5756e5d.8105d",
         "order": 1,
         "disp": true,
-        "width": "12",
-        "collapse": false
+        "width": "6",
+        "collapse": true
     },
     {
         "id": "c5756e5d.8105d",
